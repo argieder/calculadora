@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Ahorro EV - Argieder</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        argieder: {
+                            gold: '#FBB03B',
+                            goldHover: '#e09b2b',
+                            black: '#000000',
+                            cardBg: '#0a0a0a',
+                            border: '#222222',
+                            inputBg: '#121212'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+        }
+        /* Custom Range Sliders in Argieder Gold (#FBB03B) */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #222222;
+            border-radius: 9999px;
+            border: 1px solid #333333;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: #FBB03B;
+            box-shadow: 0 0 10px rgba(251, 176, 59, 0.5);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #ffffff;
+        }
+        /* Chart customization overrides */
+        canvas {
+            max-height: 280px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-black text-white flex flex-col justify-between selection:bg-argieder-gold selection:text-black">
+
+    <!-- Header -->
+    <header class="w-full border-b border-argieder-border bg-black sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <img src="LOGO-ARGIEDER-SIN-FONDO_2.png" alt="Argieder Logo" class="h-12 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/200x60/000000/FBB03B?text=Argieder';">
+                <div class="hidden md:block border-l border-argieder-border pl-4">
+                    <p class="text-xs text-slate-400 font-medium">Asesoría Energética Tecnológica</p>
+                    <p class="text-xs text-argieder-gold font-bold">Instalación Certificada de Cargadores</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <a href="tel:943227623" class="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-argieder-gold transition-colors">
+                    <i data-lucide="phone" class="w-4 h-4 text-argieder-gold"></i>
+                    <span>943 22 76 23</span>
+                </a>
+                <button onclick="openLeadModal()" class="flex items-center gap-2 bg-argieder-gold hover:bg-argieder-goldHover text-black font-extrabold px-5 py-2.5 rounded-xl text-xs sm:text-sm transition-all duration-300 shadow-md">
+                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                    <span>Pedir Presupuesto</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
+        <!-- Hero Title -->
+        <div class="text-center max-w-3xl mx-auto mb-10">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-argieder-gold/10 text-argieder-gold border border-argieder-gold/30 mb-3">
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                Estudio Energético Gratuito
+            </span>
+            <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight mb-3">
+                Calculadora de Ahorro: <span class="text-argieder-gold">Coche Eléctrico vs. Combustión</span>
+            </h1>
+            <p class="text-slate-400 text-xs sm:text-sm">
+                Ajusta los valores para calcular en tiempo real el ahorro anual exacto e impacto económico al instalar tu punto de carga inteligente con Argieder.
+            </p>
+        </div>
+
+        <!-- Global Fast Sliders Card -->
+        <div class="bg-argieder-cardBg border border-argieder-border rounded-2xl p-5 sm:p-6 mb-8 shadow-xl">
+            <h2 class="text-sm font-extrabold uppercase tracking-wider text-argieder-gold mb-4 flex items-center gap-2">
+                <i data-lucide="sliders" class="w-4 h-4"></i>
+                Parámetros Generales de Uso
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Daily Km -->
+                <div class="bg-black/60 border border-argieder-border p-4 rounded-xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-slate-300">Recorrido Diario (Km):</label>
+                        <span id="dailyKmVal" class="text-sm font-extrabold text-argieder-gold bg-argieder-gold/10 px-2.5 py-0.5 rounded border border-argieder-gold/30">30 km/día</span>
+                    </div>
+                    <input type="range" id="dailyKm" min="5" max="250" value="30" step="5" oninput="updateCalculations()" class="w-full">
+                </div>
+
+                <!-- Fuel Price -->
+                <div class="bg-black/60 border border-argieder-border p-4 rounded-xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-slate-300">Precio Combustible (€/L):</label>
+                        <span id="fuelPriceVal" class="text-sm font-extrabold text-argieder-gold bg-argieder-gold/10 px-2.5 py-0.5 rounded border border-argieder-gold/30">1.60 €/L</span>
+                    </div>
+                    <input type="range" id="fuelPrice" min="1.0" max="2.5" value="1.60" step="0.05" oninput="updateCalculations()" class="w-full">
+                </div>
+
+                <!-- Elec Price -->
+                <div class="bg-black/60 border border-argieder-border p-4 rounded-xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-semibold text-slate-300">Precio Electricidad Nocturna (€/kWh):</label>
+                        <span id="elecPriceVal" class="text-sm font-extrabold text-argieder-gold bg-argieder-gold/10 px-2.5 py-0.5 rounded border border-argieder-gold/30">0.12 €/kWh</span>
+                    </div>
+                    <input type="range" id="elecPrice" min="0.03" max="0.40" value="0.12" step="0.01" oninput="updateCalculations()" class="w-full">
+                </div>
+            </div>
+        </div>
+
+        <!-- Side by Side Comparative Inputs -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            
+            <!-- COMBUSTION CAR COLUMN -->
+            <div class="bg-argieder-cardBg border border-argieder-border rounded-2xl p-5 sm:p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between pb-4 mb-6 border-b border-argieder-border">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-red-950/40 border border-red-900/40 rounded-xl text-red-500">
+                                <i data-lucide="fuel" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Vehículo de Gasolina / Diésel</h3>
+                                <p class="text-xs text-slate-400">Costes de compra y mantenimiento continuo</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Car Price -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Precio del Coche (€):</span>
+                                <span id="iceCarPriceVal" class="font-bold text-white">25.000 €</span>
+                            </div>
+                            <input type="range" id="iceCarPrice" min="5000" max="100000" value="25000" step="1000" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Consumption -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Consumo (Litros / 100 Km):</span>
+                                <span id="iceConsumptionVal" class="font-bold text-white">6.5 L/100km</span>
+                            </div>
+                            <input type="range" id="iceConsumption" min="3" max="18" value="6.5" step="0.5" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Parkimeter -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Coste Mensual Parkímetros (€/mes):</span>
+                                <span id="iceParkingVal" class="font-bold text-white">60 €/mes</span>
+                            </div>
+                            <input type="range" id="iceParking" min="0" max="300" value="60" step="10" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Registration Tax -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Impuesto de Matriculación (€ - Pago único):</span>
+                                <span id="iceRegTaxVal" class="font-bold text-white">900 €</span>
+                            </div>
+                            <input type="range" id="iceRegTax" min="0" max="5000" value="900" step="100" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Road Tax -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Impuesto de Circulación Anual (€/año):</span>
+                                <span id="iceRoadTaxVal" class="font-bold text-white">140 €/año</span>
+                            </div>
+                            <input type="range" id="iceRoadTax" min="0" max="500" value="140" step="10" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Maintenance -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Mantenimiento Anual Promedio (€/año):</span>
+                                <span id="iceMaintVal" class="font-bold text-white">500 €/año</span>
+                            </div>
+                            <input type="range" id="iceMaint" min="100" max="2000" value="500" step="50" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Insurance -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Tarifa Anual del Seguro (€/año):</span>
+                                <span id="iceInsuranceVal" class="font-bold text-white">850 €/año</span>
+                            </div>
+                            <input type="range" id="iceInsurance" min="200" max="3000" value="850" step="50" oninput="updateCalculations()" class="w-full">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ELECTRIC CAR COLUMN -->
+            <div class="bg-argieder-cardBg border border-argieder-gold/40 rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-lg shadow-argieder-gold/5">
+                <div>
+                    <div class="flex items-center justify-between pb-4 mb-6 border-b border-argieder-border">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-argieder-gold/10 border border-argieder-gold/30 rounded-xl text-argieder-gold">
+                                <i data-lucide="zap" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white">Vehículo Eléctrico + Argieder</h3>
+                                <p class="text-xs text-argieder-gold font-medium">Instalación y Carga Inteligente en Casa</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Car Price -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Precio del Coche (€):</span>
+                                <span id="evCarPriceVal" class="font-bold text-argieder-gold">32.000 €</span>
+                            </div>
+                            <input type="range" id="evCarPrice" min="5000" max="100000" value="32000" step="1000" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Charger Installation -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300 font-semibold text-argieder-gold">Punto de Recarga + Instalación Argieder (€):</span>
+                                <span id="evChargerCostVal" class="font-bold text-argieder-gold">1.200 €</span>
+                            </div>
+                            <input type="range" id="evChargerCost" min="500" max="3500" value="1200" step="100" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Consumption -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Consumo (kWh / 100 Km):</span>
+                                <span id="evConsumptionVal" class="font-bold text-white">15.0 kWh/100km</span>
+                            </div>
+                            <input type="range" id="evConsumption" min="8" max="35" value="15.0" step="0.5" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Parkimeter -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Coste Mensual Parkímetros (€/mes):</span>
+                                <span id="evParkingVal" class="font-bold text-white">0 €/mes</span>
+                            </div>
+                            <input type="range" id="evParking" min="0" max="300" value="0" step="10" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Registration Tax -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Impuesto de Matriculación (€ - Exento):</span>
+                                <span id="evRegTaxVal" class="font-bold text-white">0 €</span>
+                            </div>
+                            <input type="range" id="evRegTax" min="0" max="5000" value="0" step="100" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Road Tax -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Impuesto de Circulación Anual (€/año):</span>
+                                <span id="evRoadTaxVal" class="font-bold text-white">35 €/año</span>
+                            </div>
+                            <input type="range" id="evRoadTax" min="0" max="500" value="35" step="5" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Maintenance -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Mantenimiento Anual Promedio (€/año):</span>
+                                <span id="evMaintVal" class="font-bold text-white">180 €/año</span>
+                            </div>
+                            <input type="range" id="evMaint" min="50" max="2000" value="180" step="10" oninput="updateCalculations()" class="w-full">
+                        </div>
+
+                        <!-- Insurance -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Tarifa Anual del Seguro (€/año):</span>
+                                <span id="evInsuranceVal" class="font-bold text-white">850 €/año</span>
+                            </div>
+                            <input type="range" id="evInsurance" min="200" max="3000" value="850" step="50" oninput="updateCalculations()" class="w-full">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Key Results Banner & Chart Section -->
+        <div class="bg-argieder-cardBg border border-argieder-border rounded-2xl p-6 sm:p-8 mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Highlights Grid (5 cols) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-argieder-gold"></i>
+                        Resultados de Amortización
+                    </h3>
+
+                    <!-- Big Box 1: Annual Savings -->
+                    <div class="bg-black border border-argieder-gold/50 rounded-2xl p-6 text-center relative overflow-hidden shadow-lg shadow-argieder-gold/5">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Ahorro Recurrente Anual</p>
+                        <div class="text-4xl sm:text-5xl font-black text-argieder-gold my-2" id="annualSavingsText">
+                            2.100 €
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Ahorro equivalente a <span id="monthlySavingsText" class="font-bold text-white">175 €</span> cada mes.
+                        </p>
+                    </div>
+
+                    <!-- Big Box 2: Payback Period -->
+                    <div class="bg-black border border-argieder-border rounded-2xl p-6 text-center">
+                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Tiempo para Amortizar la Inversión</p>
+                        <div class="text-3xl sm:text-4xl font-black text-white my-1" id="paybackYearsText">
+                            0,57 Años
+                        </div>
+                        <p class="text-xs text-argieder-gold font-medium">
+                            Recuperas el costo del cargador + instalación en pocos meses.
+                        </p>
+                    </div>
+
+                    <button onclick="openLeadModal()" class="w-full py-4 px-6 rounded-xl bg-argieder-gold hover:bg-argieder-goldHover text-black font-extrabold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-argieder-gold/10">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                        <span>Solicitar Estudio Personalizado en WhatsApp</span>
+                    </button>
+                </div>
+
+                <!-- Interactive Chart (7 cols) -->
+                <div class="lg:col-span-7 bg-black p-4 sm:p-6 border border-argieder-border rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-xs font-bold uppercase text-slate-300 flex items-center gap-2">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-argieder-gold"></i>
+                            Evolución de Costes Cumulativos (5 Años)
+                        </h4>
+                        <span class="text-[10px] text-slate-500">Incluye Coche + Energía + Gastos</span>
+                    </div>
+                    <div class="relative w-full">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Lead Request -->
+    <div id="leadModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-argieder-cardBg border border-argieder-gold/50 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative transform scale-95 transition-transform duration-300" id="modalContent">
+            <button onclick="closeLeadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <img src="LOGO-ARGIEDER-SIN-FONDO_2.png" alt="Argieder Logo" class="h-10 mx-auto mb-3 object-contain" onerror="this.onerror=null; this.src='https://placehold.co/180x50/000000/FBB03B?text=Argieder';">
+                <h3 class="text-lg font-extrabold text-white">Solicitud de Presupuesto Sin Compromiso</h3>
+                <p class="text-xs text-slate-400 mt-1">Nuestros ingenieros en Oiartzun evaluarán tu instalación doméstica o empresarial.</p>
+            </div>
+
+            <form id="leadForm" onsubmit="handleLeadSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nombre Completo</label>
+                    <input type="text" id="leadName" required placeholder="Ej: Mikel Etxebarria" class="w-full bg-argieder-inputBg border border-argieder-border rounded-xl p-3 text-xs text-white focus:border-argieder-gold outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Teléfono o WhatsApp</label>
+                    <input type="tel" id="leadPhone" required placeholder="Ej: 600 000 000" class="w-full bg-argieder-inputBg border border-argieder-border rounded-xl p-3 text-xs text-white focus:border-argieder-gold outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Localidad o Tipo de Garaje</label>
+                    <input type="text" id="leadLocation" required placeholder="Ej: Donostia / Garaje Comunitario" class="w-full bg-argieder-inputBg border border-argieder-border rounded-xl p-3 text-xs text-white focus:border-argieder-gold outline-none">
+                </div>
+
+                <button type="submit" class="w-full py-3.5 px-4 rounded-xl bg-argieder-gold hover:bg-argieder-goldHover text-black font-extrabold text-xs uppercase tracking-wider transition-all mt-2 shadow-md">
+                    Enviar Estudio por WhatsApp
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Official Footer -->
+    <footer class="w-full border-t border-argieder-border bg-black py-8 text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex flex-col items-center md:items-start gap-2">
+                <img src="LOGO-ARGIEDER-SIN-FONDO_2.png" alt="Argieder" class="h-10 w-auto object-contain" onerror="this.onerror=null; this.src='https://placehold.co/180x50/000000/FBB03B?text=Argieder';">
+                <p class="text-slate-500 text-[11px]">Argieder Gestión S.L. - Asesoría energética tecnológica dedicada a optimizar tus gastos de movilidad.</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-6 text-center md:text-right">
+                <div>
+                    <p class="font-bold text-white mb-1">Oficina y Contacto</p>
+                    <p class="text-slate-400">Astigarragako Bidea 2, Local 104/105 (CC Mamut)</p>
+                    <p class="text-slate-400">20180 Oiartzun, Gipuzkoa</p>
+                </div>
+                <div class="border-t sm:border-t-0 sm:border-l border-argieder-border pt-3 sm:pt-0 sm:pl-6">
+                    <p class="text-argieder-gold font-bold">Tel: 943 22 76 23</p>
+                    <p class="text-slate-300">Email: info@argieder.es</p>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 mt-6 pt-4 border-t border-argieder-border/50 text-center text-[10px] text-slate-600">
+            © <span id="currentYear"></span> Argieder. Todos los derechos reservados.
+        </div>
+    </footer>
+
+    <!-- Calculation Engine and Logic -->
+    <script>
+        let costChartInstance = null;
+
+        window.onload = function() {
+            lucide.createIcons();
+            document.getElementById('currentYear').innerText = new Date().getFullYear();
+            initChart();
+            updateCalculations();
+        };
+
+        function getNum(id) {
+            return parseFloat(document.getElementById(id).value) || 0;
+        }
+
+        function updateCalculations() {
+            // Read Inputs
+            const dailyKm = getNum('dailyKm');
+            const fuelPrice = getNum('fuelPrice');
+            const elecPrice = getNum('elecPrice');
+
+            // ICE Inputs
+            const iceCarPrice = getNum('iceCarPrice');
+            const iceConsumption = getNum('iceConsumption');
+            const iceParking = getNum('iceParking');
+            const iceRegTax = getNum('iceRegTax');
+            const iceRoadTax = getNum('iceRoadTax');
+            const iceMaint = getNum('iceMaint');
+            const iceInsurance = getNum('iceInsurance');
+
+            // EV Inputs
+            const evCarPrice = getNum('evCarPrice');
+            const evChargerCost = getNum('evChargerCost');
+            const evConsumption = getNum('evConsumption');
+            const evParking = getNum('evParking');
+            const evRegTax = getNum('evRegTax');
+            const evRoadTax = getNum('evRoadTax');
+            const evMaint = getNum('evMaint');
+            const evInsurance = getNum('evInsurance');
+
+            // Update Labels
+            document.getElementById('dailyKmVal').innerText = `${dailyKm} km/día`;
+            document.getElementById('fuelPriceVal').innerText = `${fuelPrice.toFixed(2)} €/L`;
+            document.getElementById('elecPriceVal').innerText = `${elecPrice.toFixed(2)} €/kWh`;
+
+            document.getElementById('iceCarPriceVal').innerText = `${iceCarPrice.toLocaleString('es-ES')} €`;
+            document.getElementById('iceConsumptionVal').innerText = `${iceConsumption} L/100km`;
+            document.getElementById('iceParkingVal').innerText = `${iceParking} €/mes`;
+            document.getElementById('iceRegTaxVal').innerText = `${iceRegTax} €`;
+            document.getElementById('iceRoadTaxVal').innerText = `${iceRoadTax} €/año`;
+            document.getElementById('iceMaintVal').innerText = `${iceMaint} €/año`;
+            document.getElementById('iceInsuranceVal').innerText = `${iceInsurance} €/año`;
+
+            document.getElementById('evCarPriceVal').innerText = `${evCarPrice.toLocaleString('es-ES')} €`;
+            document.getElementById('evChargerCostVal').innerText = `${evChargerCost.toLocaleString('es-ES')} €`;
+            document.getElementById('evConsumptionVal').innerText = `${evConsumption} kWh/100km`;
+            document.getElementById('evParkingVal').innerText = `${evParking} €/mes`;
+            document.getElementById('evRegTaxVal').innerText = `${evRegTax} €`;
+            document.getElementById('evRoadTaxVal').innerText = `${evRoadTax} €/año`;
+            document.getElementById('evMaintVal').innerText = `${evMaint} €/año`;
+            document.getElementById('evInsuranceVal').innerText = `${evInsurance} €/año`;
+
+            // Annual Distance
+            const annualKm = dailyKm * 365;
+
+            // Annual Energy / Fuel Costs
+            const annualFuelCost = (annualKm / 100) * iceConsumption * fuelPrice;
+            const annualElecCost = (annualKm / 100) * evConsumption * elecPrice;
+
+            // Total Annual Operating Costs (Excluding upfront purchase)
+            const annualIceOpCost = annualFuelCost + (iceParking * 12) + iceRoadTax + iceMaint + iceInsurance;
+            const annualEvOpCost = annualElecCost + (evParking * 12) + evRoadTax + evMaint + evInsurance;
+
+            // Savings Metrics
+            const annualSavings = Math.max(0, annualIceOpCost - annualEvOpCost);
+            const monthlySavings = annualSavings / 12;
+
+            // Payback Period on Charger Installation (Years)
+            const paybackYears = annualSavings > 0 ? (evChargerCost / annualSavings) : 0;
+
+            // Update UI Outputs
+            document.getElementById('annualSavingsText').innerText = `${Math.round(annualSavings).toLocaleString('es-ES')} €`;
+            document.getElementById('monthlySavingsText').innerText = `${Math.round(monthlySavings).toLocaleString('es-ES')} €`;
+            document.getElementById('paybackYearsText').innerText = paybackYears > 0 ? `${paybackYears.toFixed(2)} Años` : 'N/A';
+
+            // Chart Data Generation (Years 0 to 5)
+            const iceYearsData = [];
+            const evYearsData = [];
+
+            // Year 0: Purchase + Reg Tax + Charger Cost
+            const iceInitial = iceCarPrice + iceRegTax;
+            const evInitial = evCarPrice + evRegTax + evChargerCost;
+
+            for (let yr = 0; yr <= 5; yr++) {
+                iceYearsData.push(Math.round(iceInitial + (annualIceOpCost * yr)));
+                evYearsData.push(Math.round(evInitial + (annualEvOpCost * yr)));
+            }
+
+            updateChartData(iceYearsData, evYearsData);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('costChart').getContext('2d');
+            costChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Año 0 (Compra)', 'Año 1', 'Año 2', 'Año 3', 'Año 4', 'Año 5'],
+                    datasets: [
+                        {
+                            label: 'Vehículo Combustión',
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
+                            data: [0, 0, 0, 0, 0, 0],
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Vehículo Eléctrico + Argieder',
+                            borderColor: '#FBB03B',
+                            backgroundColor: 'rgba(251, 176, 59, 0.15)',
+                            borderWidth: 3,
+                            data: [0, 0, 0, 0, 0, 0],
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff',
+                                font: { size: 11, family: 'Plus Jakarta Sans' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw.toLocaleString('es-ES')} €`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#222222' },
+                            ticks: { color: '#888888', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#222222' },
+                            ticks: { 
+                                color: '#888888', 
+                                font: { size: 10 },
+                                callback: function(value) { return value.toLocaleString('es-ES') + ' €'; }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartData(iceData, evData) {
+            if (!costChartInstance) return;
+            costChartInstance.data.datasets[0].data = iceData;
+            costChartInstance.data.datasets[1].data = evData;
+            costChartInstance.update();
+        }
+
+        // Modal Controls
+        function openLeadModal() {
+            const modal = document.getElementById('leadModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }
+
+        function closeLeadModal() {
+            const modal = document.getElementById('leadModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+        }
+
+        function handleLeadSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('leadName').value;
+            const phone = document.getElementById('leadPhone').value;
+            const location = document.getElementById('leadLocation').value;
+
+            const annualSavings = document.getElementById('annualSavingsText').innerText;
+            const paybackYears = document.getElementById('paybackYearsText').innerText;
+            const km = document.getElementById('dailyKmVal').innerText;
+
+            const message = `Hola Argieder, he realizado un estudio en vuestra calculadora online.%0A%0A*Mis Datos:*%0A- Nombre: ${encodeURIComponent(name)}%0A- Teléfono: ${encodeURIComponent(phone)}%0A- Ubicación: ${encodeURIComponent(location)}%0A%0A*Resultado de mi Estudio:*%0A- Recorrido: ${encodeURIComponent(km)}%0A- Ahorro Anual Estimado: ${encodeURIComponent(annualSavings)}%0A- Tiempo de Amortización: ${encodeURIComponent(paybackYears)}%0A%0ADeseo solicitar un presupuesto oficial para la instalación de un punto de carga.`;
+
+            // Direct WhatsApp link to Argieder phone line
+            window.open(`https://wa.me/34943227623?text=${message}`, '_blank');
+            closeLeadModal();
+        }
+    </script>
+</body>
+</html>
